@@ -61,13 +61,21 @@ def main(path: str) -> None:
                     _ch_ = msg.channel
                     _t_ = msg.time
                     if _b_[0] == 144 or _b_[0] == 128:
-                        _instr_ = ch_prg[_ch_]
+                        if _ch_ in ch_prg:
+                            _instr_ = ch_prg[_ch_]
+                        else:
+                            _instr_ = 0
+                            ch_prg[_ch_] = 0
                         midi_ch_instr_data[_ch_][ch_prg[_ch_]].append(
                             _b_ + [_t_] + [_instr_] + [time_command_count]
                         )
                         time_command_count += 1
                     elif _t_ > 0:
-                        _instr_ = ch_prg[_ch_]
+                        if _ch_ in ch_prg:
+                            _instr_ = ch_prg[_ch_]
+                        else:
+                            _instr_ = 0
+                            ch_prg[_ch_] = 0
                         midi_ch_instr_data[_ch_][ch_prg[_ch_]].append(
                             _b_ + [_t_] + [_instr_] + [time_command_count]
                         )
@@ -104,41 +112,84 @@ def main(path: str) -> None:
         song_duration_s_1 = (
             max_ticks / ticks_per_beat / tempo
         ) * 60  # from midi units (ticks)
-        midi_ch_instr_notes = defaultdict(lambda: defaultdict(list))
+        midi_ch_instr_notes = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(list))
+        )
         for _ch_ in midi_ch_instr_data.keys():
             for _instr_ in midi_ch_instr_data[_ch_].keys():
-                notes_d = defaultdict(list)
-                notes_t = defaultdict(list)
+                notes_f = defaultdict(list)
                 for j in range(len(midi_ch_instr_data[_ch_][_instr_])):
                     _data_ = midi_ch_instr_data[_ch_][_instr_][j]
                     _time_ = midi_ch_instr_time[_ch_][_instr_][j]
-                    midi_ch_instr_notes[_ch_][_instr_].append([])
                     if _data_[0] == 144 or _data_[0] == 128:
-                        notes_d[_data_[1]] += [_data_ + [j]]
-                        notes_t[_data_[1]] += [_time_ + [j]]
-                for note in notes_d.keys():
-                    events_d = notes_d[note]
-                    events_t = notes_t[note]
+                        notes_f[_data_[1]] += [_data_ + _time_ + [j]]
+                for note in notes_f.keys():
+                    events_f = notes_f[note]
                     j = 0
-                    while j < len(events_d):
+                    while j < len(events_f):
                         k = 1
-                        while j + k < len(events_d):
+                        while j + k < len(events_f):
                             if (
-                                events_d[j + k][0] == 144
-                                and events_d[j + k][2] > 0
-                                and events_t[j + k][1] - events_t[j + 0][1] > 0
+                                (
+                                    events_f[j + k][0] == 144
+                                    and events_f[j + k][2] == 0
+                                    and j + k + 1 < len(events_f)
+                                    and events_f[j + k + 1][0] == 144
+                                    and events_f[j + k + 1][2] != 0
+                                )
+                                or (
+                                    events_f[j + k][0] == 144
+                                    and events_f[j + k][2] == 0
+                                    and j + k + 1 == len(events_f)
+                                )
+                                or (
+                                    events_f[j + k][0] == 128
+                                    and j + k + 1 < len(events_f)
+                                    and events_f[j + k + 1][0] == 144
+                                )
+                                or (
+                                    events_f[j + k][0] == 128
+                                    and j + k + 1 == len(events_f)
+                                )
                             ):
+                                k += 1
                                 break
                             else:
                                 k += 1
-                        single_note_d_event = events_d[j : (j + k)]
-                        single_note_t_event = events_t[j : (j + k)]
+                        single_note_event = events_f[j : (j + k)]
+                        if single_note_event[0][2] == 0:
+                            pass
                         if k == 1:
-                            pass
+                            if j + k == len(events_f):
+                                pass
+                            else:
+                                pass  # not good
                         elif k == 2:
-                            pass
+                            if (
+                                single_note_event[0][0] == 144
+                                and single_note_event[-1][0] == 128
+                            ):
+                                pass
+                            elif single_note_event[1][2] == 0:
+                                pass
+                            elif j + k == len(events_f):
+                                pass
+                            else:
+                                pass  # not good
                         else:
-                            pass
+                            if (
+                                single_note_event[0][0] == 144
+                                and single_note_event[-1][0] == 128
+                            ):
+                                pass
+                            elif (
+                                single_note_event[0][0] == 144
+                                and single_note_event[-1][0] == 144
+                                and single_note_event[-1][2] == 0
+                            ):
+                                pass
+                            else:
+                                pass  # not good
                         j += k
                 pass
                 pass
