@@ -1,4 +1,14 @@
 
+*BOOKS:*
+
+https://the-eye.eu/public/AI/
+https://www.gutenberg.org/browse/scores/top
+
+*MIDI:*
+
+https://freemidi.org/new
+https://www.cprato.com/en/midi/details/354/billie-eilish-all-the-good-girls-go-to-hell
+
 
 game systems midi:
 
